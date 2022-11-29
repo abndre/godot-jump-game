@@ -8,7 +8,7 @@ script = ExtResource( 2 )
 
 [node name="Sprite" type="Sprite" parent="."]
 modulate = Color( 0.164706, 0.0196078, 0.0196078, 1 )
-position = Vector2( 508, 307 )
+position = Vector2( 506, 311 )
 scale = Vector2( 6.60938, 5.21875 )
 texture = ExtResource( 1 )
 
