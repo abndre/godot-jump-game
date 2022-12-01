@@ -1,66 +1,41 @@
 name: 'Publish to GitHub Pages'
-image: barichello/godot-ci:3.5.1
 
-# NOTE: the `cd` command in each build stage is not necessary if your
-# project.godot is at the repo root
-# https://gitlab.com/barichello/godot-ci/-/blob/master/.gitlab-ci.yml
-# Cache imported assets between runs
+env:
+  GODOT_VERSION: 3.5.1 # Remember to manually set image to this version below.
+
 on:
   workflow_dispatch:
   push:
     branches:
       - master
 
-cache:
-  key: import-assets
-  paths:
-    - .import/
+jobs:
+  deploy:
+    runs-on: ubuntu-18.04
 
-stages:
-  - export
-  - deploy
+    container:
+      image: barichello/godot-ci:3.5.1
 
-variables:
-  EXPORT_NAME: test-project
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
 
+      - name: Move HTML5 templates into position
+        run: |
+          mkdir -v -p ~/.local/share/godot/templates
+          mv /root/.local/share/godot/templates/${GODOT_VERSION}.stable ~/.local/share/godot/templates/${GODOT_VERSION}.stable
+      - name: Create staging directory
+        run: mkdir -v -p build/web
 
-web:
-  stage: export
-  script:
-    - mkdir -v -p build/web
-    - cd $EXPORT_NAME
-    - godot -v --export "HTML5" ../build/web/index.html
-  artifacts:
-    name: $EXPORT_NAME-$CI_JOB_NAME
-    paths:
-      - build/web
+      - name: Build
+        run: godot -v --export "HTML5" ../build/web/index.html project/project.godot
 
-# GitHub Pages Deploy
-deploy-github-pages:
-  stage: deploy
-  dependencies:
-    - web
-  script:
-    # This ensures the `gh-pages` branch is available.
-    - git fetch
-    - git checkout gh-pages
-    - rm -f *.md
-    - mv build/web/** .
-    - git config user.email $GIT_EMAIL
-    - git config user.name $GIT_USERNAME
-    - git remote add github $REMOTE_URL
-    - git add -A
-    - 'git commit -m "ci: Deploy GitHub Page | $EXPORT_NAME:$CI_JOB_NAME" -m "Deploy from GitLab pipeline #$CI_PIPELINE_ID" || true'
-    - git push github gh-pages -f
-  script:
-    # This ensures the `gh-pages` branch is available.
-    - git fetch
-    - git checkout gh-pages
-    - rm -f *.md
-    - mv build/web/** .
-    - git config user.email $GIT_EMAIL
-    - git config user.name $GIT_USERNAME
-    - git remote add github $REMOTE_URL
-    - git add -A
-    - 'git commit -m "ci: Deploy GitHub Page | $EXPORT_NAME:$CI_JOB_NAME" -m "Deploy from GitLab pipeline #$CI_PIPELINE_ID" || true'
-    - git push github gh-pages -f
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
+          force_orphan: true
+          user_name: 'github-ci[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Publish to gh-pages' 
