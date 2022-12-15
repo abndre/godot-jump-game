@@ -2,7 +2,7 @@ name: 'Publish to GitHub Pages'
 
 env:
   GODOT_VERSION: 3.5.1 # Remember to manually set image to this version below.
-  EXPORT_NAME: project
+  EXPORT_NAME: jump-game
 
 on:
   workflow_dispatch:
