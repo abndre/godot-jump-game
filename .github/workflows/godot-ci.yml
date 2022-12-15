@@ -5,7 +5,6 @@ env:
   EXPORT_NAME: jump-game
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - master
